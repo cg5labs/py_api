@@ -1,0 +1,30 @@
+---
+version: '2'
+services:
+  postgres:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: bookmarkdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+    networks:
+      - postgres-network
+
+  api:
+    image: python:3.11-alpine
+    command: "gunicorn api:app"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    # Path on the host, relative to the Compose file
+    volumes:
+      - ./:/tmp
+    networks:
+      - postgres-network
+
+networks:
+  postgres-network:
+    driver: bridge
