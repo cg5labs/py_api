@@ -148,6 +148,7 @@ class QuoteResource:
         resp.media = quote
 
 class RegisterResource:
+    """ API user enrolment """
 
     def on_post(self, req, resp):
 
@@ -208,9 +209,9 @@ class ProtectedResource:
         resp.media = {'message': 'Welcome protected'}
 
 
-
-
 class LoginResource:
+    """Login API"""
+
     def on_post(self, req, resp):
         """Login API resource.
         ---
@@ -309,7 +310,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # override switch to force $PROFILE 
+    # override switch to force $PROFILE
     if args.profile:
         os.environ["PROFILE"] = args.profile
 
@@ -322,21 +323,6 @@ if __name__ == '__main__':
       datefmt='%m-%d %H:%M',
       filename=args.log,
       filemode='w')
-
-
-    #fh = logging.FileHandler('log/app.log')
-    #fh.setLevel(logging.DEBUG)
-    # create console handler with a higher log level
-    #ch = logging.StreamHandler()
-    #ch.setLevel(logging.INFO)
-    # create formatter and add it to the handlers
-    #formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    #formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-    ##fh.setFormatter(formatter)
-    #ch.setFormatter(formatter)
-    # add the handlers to the logger
-    #log.addHandler(fh)
-    #log.addHandler(ch)
 
     # define a Handler which writes INFO messages or higher to the sys.stderr
     console = logging.StreamHandler()
