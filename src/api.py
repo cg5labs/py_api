@@ -328,10 +328,10 @@ if __name__ == '__main__':
     console = logging.StreamHandler()
     console.setLevel(logging.INFO)
 
+    load_dotenv()  # take environment variables
+
     system_profile = os.getenv("PROFILE")
     log.info("Loaded system profile: %s" % system_profile )
-
-    load_dotenv()  # take environment variables
 
     from wsgiref.simple_server import make_server
     with make_server('', 8000, app) as httpd:
