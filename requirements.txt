@@ -2,3 +2,8 @@ pyjwt >= 2.8.0
 falcon >= 3.1.0
 falcon_prometheus >= 0.1.0
 gunicorn >= 22.0.0
+cryptography
+pylint
+python-dotenv
+psycopg2-binary
+sqlalchemy
