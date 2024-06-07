@@ -40,7 +40,9 @@ Base = declarative_base()
 
 # Load the key from the file
 def load_key():
-    return open("secret.key", "rb").read()
+
+    secret_key = os.getenv('SECRET_KEY')
+    return open(secret_key, "rb").read()
 
 # Encrypt and decrypt functions
 def encrypt_string(plain_text):

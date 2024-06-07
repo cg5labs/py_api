@@ -10,19 +10,38 @@ services:
     networks:
       - postgres-network
 
-#  api:
-#    image: python:3.11-alpine
-#    command: "gunicorn api:app"
-#    ports:
-#      - "8000:8000"
-#    depends_on:
-#      - postgres
-#    # Path on the host, relative to the Compose file
-#    volumes:
-#      - ./:/tmp
-#    networks:
-#      - postgres-network
+  init-container:
+    image: cg5labs/py_api:latest
+    user: "999"
+    entrypoint: "python3 generate_key.py"
+    environment:
+      SECRET_KEY: "/srv/app/app-data/secret.key"
+    volumes:
+      - app-data:/srv/app/app-data:rw
+    depends_on:
+      - postgres
+
+  api:
+    image: cg5labs/py_api:latest
+    user: "999"
+    environment:
+      SECRET_KEY: /srv/app/app-data/secret.key
+    env_file:
+      - src/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    # Path on the host, relative to the Compose file
+    volumes:
+      - ./:/tmp
+      - app-data:/srv/app/app-data
+    networks:
+      - postgres-network
 
 networks:
   postgres-network:
     driver: bridge
+
+volumes:
+  app-data:
