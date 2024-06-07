@@ -13,6 +13,7 @@ RUN pip3 install -r requirements.txt
 COPY src/api.py ./
 COPY src/sql_models.py ./
 COPY src/generate_key.py ./
+COPY src/crud.py ./
 
 RUN mkdir app-data && \ 
     chown tdevops /srv/app/app-data
