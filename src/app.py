@@ -76,6 +76,7 @@ def main():
     system_profile = os.getenv("PROFILE")
     log.info("Loaded system profile: %s" % system_profile )
 
+    # TODO: externalize server IP, tcp-port
     from wsgiref.simple_server import make_server
     with make_server('', 8000, app) as httpd:
         log.info("log: %s" % log.name)
