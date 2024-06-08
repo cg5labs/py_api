@@ -40,8 +40,6 @@ def valid_token(client):
     token = response.json['token']
     return token
 
-
-
 def test_login_request(client):
     """ /login api test """
     # Define the URL and payload
