@@ -34,7 +34,6 @@ services:
     volumes:
       - app-data:/srv/app/app-data:rw
     depends_on:
-      - postgres
       - init-1
     networks:
       - postgres-network
@@ -52,7 +51,6 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - postgres
       - init-2
     volumes:
       - app-data:/srv/app/app-data
