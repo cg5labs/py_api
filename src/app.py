@@ -2,25 +2,16 @@
 """Sample API module using JWT"""
 
 import argparse
-import datetime
-import json
 import logging
 import os
-import time
-import uuid
 
-import jwt
 import falcon
 
 from falcon_prometheus import PrometheusMiddleware
 
 from dotenv import load_dotenv
 
-#from sql_models import User
-
 import api
-import db
-import sql_models
 
 
 # Falcon app and routes

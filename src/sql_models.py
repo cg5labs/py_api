@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""" SQL management  """
+""" SQL models  """
 
 import os
 import logging
@@ -59,6 +59,6 @@ class User(Base):
 
     @property
     def decrypted_user_auth(self):
+        """ return plaintext auth """
         key = load_key()
         return decrypt_string(self.user_auth, key)
-

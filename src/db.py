@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""" DB setup and base class for SQL models  """
+""" DB connection and base class for SQL models  """
 
 import os
 

@@ -11,8 +11,7 @@ import jwt
 import falcon
 
 import db
-import sql_models
-#from sql_models import User
+from sql_models import User
 
 # Create a logger for this module
 log = logging.getLogger(__name__)
@@ -98,7 +97,7 @@ class APISession:
     # CREATE
     def create_user(self, user_name, user_auth):
         """ Create new user record in DB """
-        new_user = sql_models.User(user_name, user_auth)
+        new_user = User(user_name, user_auth)
         db.sql_session.add(new_user)
         db.sql_session.commit()
         return new_user
@@ -108,7 +107,8 @@ class APISession:
 
         log.info("verify_creds")
 
-        user = db.sql_session.query(sql_models.User).filter(sql_models.User.user_name == self.user_name).first()
+        #user = db.sql_session.query(sql_models.User).filter(sql_models.User.user_name == self.user_name).first()
+        user = db.sql_session.query(User).filter(User.user_name == self.user_name).first()
 
         if user.decrypted_user_auth == self.user_auth:
             self.set_authenticated(True)
@@ -140,7 +140,7 @@ class QuoteResource:
     """Sample API resource (public) """
 
     def on_get(self, req, resp):
-        """Handle GET requests."""
+        """ Handle GET requests. """
 
         quote = {
             'author': 'Grace Hopper',
@@ -157,6 +157,7 @@ class RegisterResource:
     """ API user enrolment """
 
     def on_post(self, req, resp):
+        """ Handle POST requests. """
 
         try:
             # Retrieve and parse JSON data from the request body
@@ -207,8 +208,9 @@ class RegisterResource:
 
 
 class ProtectedResource:
-    """Sample API resource (restricted) """
+    """ Sample API resource (restricted) """
     def on_get(self, req, resp):
+        """ Handle GET requests. """
         log.info("%s %s %s %s" % (req.method,req.path,resp.status,resp.text))
         resp.media = {'message': 'Welcome protected'}
 
