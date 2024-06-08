@@ -9,6 +9,10 @@ __pycache__/
 # vim swap
 *.swp
 
+# logs
+*.log
+src/log
+
 # Distribution / packaging
 .Python
 build/

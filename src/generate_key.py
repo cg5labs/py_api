@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+""" Encryption key generator """
 
 import os
 
@@ -17,4 +18,3 @@ with open(secret_key, "wb") as key_file:
     key_file.write(key)
 
 print("Key saved to %s" % secret_key)
-

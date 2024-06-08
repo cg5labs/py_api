@@ -10,14 +10,14 @@ import falcon
 from falcon import testing
 from dotenv import load_dotenv
 
-import api
+import app
 
 load_dotenv()  # take environment variables
 
 # Fixture to set up the test client
 @pytest.fixture
 def client():
-    return testing.TestClient(api.app)
+    return testing.TestClient(app.app)
 
 # Fixture to get a valid token
 @pytest.fixture

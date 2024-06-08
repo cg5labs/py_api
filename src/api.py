@@ -1,22 +1,24 @@
 #!/usr/bin/env python3
 """Sample API module using JWT"""
 
-import argparse
 import datetime
 import json
 import logging
-import os
 import time
 import uuid
 
 import jwt
 import falcon
 
+import db
+import sql_models
+#from sql_models import User
 
-from falcon_prometheus import PrometheusMiddleware
-from dotenv import load_dotenv
+# Create a logger for this module
+log = logging.getLogger(__name__)
 
-from sql_models import User, session
+# Secret key to encode the JWT
+JWT_SECRET_KEY = str(uuid.uuid4())
 
 class JWTAuthMiddleware:
     """ # Middleware for handling JWT """
@@ -45,7 +47,7 @@ class JWTAuthMiddleware:
         except jwt.InvalidTokenError:
             raise falcon.HTTPForbidden(description='Invalid token')
 
-class Session:
+class APISession:
     """Session objects for http session """
     def __init__(self):
         self.user_name = None
@@ -96,15 +98,17 @@ class Session:
     # CREATE
     def create_user(self, user_name, user_auth):
         """ Create new user record in DB """
-        new_user = User(user_name, user_auth)
-        session.add(new_user)
-        session.commit()
+        new_user = sql_models.User(user_name, user_auth)
+        db.sql_session.add(new_user)
+        db.sql_session.commit()
         return new_user
 
     def verify_creds(self):
         """ Verifies the object credentials against user records DB"""
 
-        user = session.query(User).filter(User.user_name == self.user_name).first()
+        log.info("verify_creds")
+
+        user = db.sql_session.query(sql_models.User).filter(sql_models.User.user_name == self.user_name).first()
 
         if user.decrypted_user_auth == self.user_auth:
             self.set_authenticated(True)
@@ -116,6 +120,7 @@ class Session:
     def create_token(self, sid):
         """ Generate new JWT"""
 
+        log.info("create_token")
         token = jwt.encode(
             {
                 'sid': sid,
@@ -145,6 +150,7 @@ class QuoteResource:
             ),
         }
 
+        log.info("%s %s %s %s" % (req.method,req.path,resp.status,resp.text))
         resp.media = quote
 
 class RegisterResource:
@@ -162,15 +168,7 @@ class RegisterResource:
 
             if reg_user is not None and reg_auth is not None:
 
-                #print("Reg for - ID: %s, %s" % (reg_user,reg_auth))
-                #if reg_user:
-                #    reg_user_enc = encrypt_string(reg_user)
-                #    reg_user_dec = decrypt_string(reg_user_enc)
-                #if reg_auth:
-                #    reg_auth_enc = encrypt_string(reg_auth)
-                #    reg_auth_dec = decrypt_string(reg_auth_enc)
-
-                session = Session()
+                session = APISession()
                 session.set_user_name(reg_user)
                 session.set_user_auth(reg_auth)
 
@@ -185,20 +183,25 @@ class RegisterResource:
                 resp.status = falcon.HTTP_201  # Created
                 #resp.media = {'token': token}
 
+                log.info("%s %s %s %s" % (req.method,req.path,resp.status,resp.text))
+
             else:
                 # Raise an error if login JSON payload (user, auth) is missing
                 raise ValueError("Both user and auth are required in the request JSON.")
 
         except json.JSONDecodeError:
             # Handle JSON decoding errors
+            log.error('Invalid JSON format')
             resp.status = falcon.HTTP_400  # Bad Request
             resp.text = json.dumps({'error': 'Invalid JSON format'})
         except ValueError as e:
+            log.error(e)
             # Handle missing task_id or title
             resp.status = falcon.HTTP_400  # Bad Request
             resp.text = json.dumps({'error': str(e)})
         except Exception as e:
             # Handle other exceptions
+            log.error(e)
             resp.status = falcon.HTTP_500  # Internal Server Error
             resp.text = json.dumps({'error': 'Internal Server Error'})
 
@@ -206,6 +209,7 @@ class RegisterResource:
 class ProtectedResource:
     """Sample API resource (restricted) """
     def on_get(self, req, resp):
+        log.info("%s %s %s %s" % (req.method,req.path,resp.status,resp.text))
         resp.media = {'message': 'Welcome protected'}
 
 
@@ -235,7 +239,7 @@ class LoginResource:
                 log.debug("Auth for - ID: %s, %s" % (login_id,login_auth))
 
                 # FIXME
-                session = Session()
+                session = APISession()
 
                 session.set_user_name(login_id)
                 session.set_user_auth(login_auth)
@@ -245,7 +249,6 @@ class LoginResource:
                 auth_status = session.verify_creds()
                 if auth_status is True:
                     token = session.create_token(sid)
-                    log.debug("Auth success - ID: %s, %s" % (login_id,login_auth))
                     log.debug("Auth success - %s " % (session.get_user_name()))
 
                     resp.set_header('Authorization', 'Bearer %s' % token )
@@ -261,6 +264,7 @@ class LoginResource:
                       'message': 'auth failed'
                     }
 
+                log.info("%s %s %s %s" % (req.method,req.path,resp.status,resp.text))
                 resp.text = json.dumps(response_data)
 
             else:
@@ -269,72 +273,16 @@ class LoginResource:
 
         except json.JSONDecodeError as e:
             # Handle JSON decoding errors
+            log.error(e)
             resp.status = falcon.HTTP_400  # Bad Request
             resp.text = json.dumps({'error': 'Invalid JSON format'})
         except ValueError as e:
             # Handle missing task_id or title
+            log.error(e)
             resp.status = falcon.HTTP_400  # Bad Request
             resp.text = json.dumps({'error': str(e)})
         except Exception as e:
             # Handle other exceptions
+            log.error(e)
             resp.status = falcon.HTTP_500  # Internal Server Error
-            resp.text = json.dumps({'error': 'Internal Server Error'})
-
-
-# Falcon app and routes
-prometheus = PrometheusMiddleware()
-login_resource = LoginResource()
-
-app = falcon.App(middleware=[JWTAuthMiddleware(),prometheus])
-app.add_route('/quote', QuoteResource())
-app.add_route('/login', login_resource)
-app.add_route('/register', RegisterResource())
-app.add_route('/protected', ProtectedResource())
-app.add_route('/metrics', prometheus)
-
-
-# FIXME: externalize
-# Secret key to encode the JWT
-JWT_SECRET_KEY = 'your_secret_key'
-
-log = logging.getLogger(__name__)
-
-
-if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("-d", "--debug", help="Enable debug logs", action="store_true")
-    parser.add_argument("--log", help="logfile path, e.g. log/apps.log", default="log/app.log")
-    parser.add_argument("-p", "--profile", help="environment profile to use, e.g. local,dev")
-
-    args = parser.parse_args()
-
-    # override switch to force $PROFILE
-    if args.profile:
-        os.environ["PROFILE"] = args.profile
-
-
-    if not os.path.exists(os.path.dirname(args.log)):
-        os.mkdir(os.path.dirname(args.log))
-
-    logging.basicConfig(level="INFO" if not args.debug else "DEBUG",
-      format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-      datefmt='%m-%d %H:%M',
-      filename=args.log,
-      filemode='w')
-
-    # define a Handler which writes INFO messages or higher to the sys.stderr
-    console = logging.StreamHandler()
-    console.setLevel(logging.INFO)
-
-    load_dotenv()  # take environment variables
-
-    system_profile = os.getenv("PROFILE")
-    log.info("Loaded system profile: %s" % system_profile )
-
-    from wsgiref.simple_server import make_server
-    with make_server('', 8000, app) as httpd:
-        log.info("log: %s" % log.name)
-        log.info('Serving on port 8000...')
-        httpd.serve_forever()
+            resp.text = json.dumps({'error': 'Internal Server Error'} )

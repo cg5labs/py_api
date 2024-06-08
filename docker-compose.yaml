@@ -42,7 +42,7 @@ services:
   api:
     image: cg5labs/py_api:latest
     user: "999"
-    entrypoint: "python3 api.py -p DEFAULT"
+    entrypoint: "python3 app.py -p DEFAULT"
     environment:
       SECRET_KEY: /srv/app/app-data/secret.key
       PROFILE: "DEFAULT"

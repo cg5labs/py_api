@@ -4,18 +4,20 @@ import os
 
 from dotenv import load_dotenv
 
-from sql_models import User, session, encrypt_string, decrypt_string
+import db
+#import sql_models
+from sql_models import User, encrypt_string, decrypt_string
 
 # CREATE
 def create_user(user_name, user_auth):
     new_user = User(user_name, user_auth)
-    session.add(new_user)
-    session.commit()
+    db.sql_session.add(new_user)
+    db.sql_session.commit()
     return new_user
 
 # READ
 def get_user(user_id):
-    user = session.query(User).filter(User.id == user_id).first()
+    user = db.sql_session.query(User).filter(User.id == user_id).first()
     if user:
         return {
             'id': user.id,
@@ -25,7 +27,7 @@ def get_user(user_id):
     return None
 
 def get_all_users():
-    users = session.query(User).all()
+    users = db.sql_session.query(User).all()
     return [{
         'id': user.id,
         'name': user.user_name,
@@ -34,13 +36,13 @@ def get_all_users():
 
 # UPDATE
 def update_user(user_id, user_name=None, user_auth=None):
-    user = session.query(User).filter(User.id == user_id).first()
+    user = db.sql_session.query(User).filter(User.id == user_id).first()
     if user:
         if user_name:
             user.name = encrypt_string(user_name)
         if user_auth:
             user.auth = encrypt_string(user_auth)
-        session.commit()
+        db.session.commit()
         return {
             'id': user.id,
             'name': user.user_name,
@@ -50,16 +52,20 @@ def update_user(user_id, user_name=None, user_auth=None):
 
 # DELETE
 def delete_user(user_id):
-    user = session.query(User).filter(User.id == user_id).first()
+    user = db.sql_session.query(User).filter(User.id == user_id).first()
     if user:
-        session.delete(user)
-        session.commit()
+        db.sql_session.delete(user)
+        db.sql_session.commit()
         return True
     return False
 
 if __name__ == "__main__":
 
     load_dotenv()  # take environment variables
+
+    engine = db.create_db_engine()
+    db.Base.metadata.create_all(engine)
+
 
     # Create admin user
     admin_user = os.getenv('API_ADMIN')
