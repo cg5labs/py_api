@@ -54,10 +54,9 @@ services:
     depends_on:
       - postgres
       - init-2
-    # Path on the host, relative to the Compose file
     volumes:
-      - ./:/tmp
       - app-data:/srv/app/app-data
+      #- ./:/tmp
     networks:
       - postgres-network
 
