@@ -29,7 +29,7 @@ class JWTAuthMiddleware:
         req.start_time = time.time()
 
         # whitelist public pages
-        if req.path in ['/login','/register', '/metrics', '/quote' ]:
+        if req.path in ['/login', '/metrics', '/quote' ]:
             return
 
         token = req.get_header('Authorization')
@@ -107,7 +107,6 @@ class APISession:
 
         log.info("verify_creds")
 
-        #user = db.sql_session.query(sql_models.User).filter(sql_models.User.user_name == self.user_name).first()
         user = db.sql_session.query(User).filter(User.user_name == self.user_name).first()
 
         if user.decrypted_user_auth == self.user_auth:
@@ -169,20 +168,19 @@ class RegisterResource:
 
             if reg_user is not None and reg_auth is not None:
 
-                session = APISession()
-                session.set_user_name(reg_user)
-                session.set_user_auth(reg_auth)
+                api_session = APISession()
+                api_session.set_user_name(reg_user)
+                api_session.set_user_auth(reg_auth)
 
                 # TODO: check if user already exists in DB
-                session.create_user(reg_user,reg_auth)
+                api_session.create_user(reg_user,reg_auth)
 
                 response_data = {
-                      'User created successfully': reg_user
+                      'registered': reg_user
                 }
 
                 resp.text = json.dumps(response_data)
                 resp.status = falcon.HTTP_201  # Created
-                #resp.media = {'token': token}
 
                 log.info("%s %s %s %s" % (req.method,req.path,resp.status,resp.text))
 
@@ -241,17 +239,17 @@ class LoginResource:
                 log.debug("Auth for - ID: %s, %s" % (login_id,login_auth))
 
                 # FIXME
-                session = APISession()
+                api_session = APISession()
 
-                session.set_user_name(login_id)
-                session.set_user_auth(login_auth)
-                session.set_sid()
-                sid = session.get_sid()
+                api_session.set_user_name(login_id)
+                api_session.set_user_auth(login_auth)
+                api_session.set_sid()
+                sid = api_session.get_sid()
                 log.info("SID %s" % sid)
-                auth_status = session.verify_creds()
+                auth_status = api_session.verify_creds()
                 if auth_status is True:
-                    token = session.create_token(sid)
-                    log.debug("Auth success - %s " % (session.get_user_name()))
+                    token = api_session.create_token(sid)
+                    log.debug("Auth success - %s " % (api_session.get_user_name()))
 
                     resp.set_header('Authorization', 'Bearer %s' % token )
                     resp.status = falcon.HTTP_201  # Created
