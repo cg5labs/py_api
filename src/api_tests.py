@@ -17,6 +17,8 @@ load_dotenv()  # take environment variables
 # Fixture to set up the test client
 @pytest.fixture
 def client():
+    """ Init test client instance"""
+
     return testing.TestClient(app.app)
 
 # Fixture to get a valid token

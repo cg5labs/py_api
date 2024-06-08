@@ -40,7 +40,7 @@ class JWTAuthMiddleware:
             if token.startswith('Bearer '):
                 token = token.split(' ')[1]
             data = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
-            #req.context['user_name'] = data['user_name']
+
         except jwt.ExpiredSignatureError:
             raise falcon.HTTPForbidden(description='Token has expired')
         except jwt.InvalidTokenError:

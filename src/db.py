@@ -11,6 +11,7 @@ from sqlalchemy import create_engine
 #from sql_models import User
 
 def create_db_engine():
+    """ Initialize DB connection """
 
     # Load database configuration from environment variables
     db_user = os.getenv('DB_USER')
@@ -25,19 +26,18 @@ def create_db_engine():
 
     match os.getenv(db_engine):
         case "sqlite":
-            DATABASE_URL = "sqlite:///%s" % db_path
+            database_url = "sqlite:///%s" % db_path
 
         case "postgresql":
-            DATABASE_URL = ( "postgresql+psycopg2://%s:%s@%s:%s/%s" % (db_user, db_pass, db_host,
+            database_url = ( "postgresql+psycopg2://%s:%s@%s:%s/%s" % (db_user, db_pass, db_host,
                 db_port, db_name))
 
-    #sql_engine = create_engine(DATABASE_URL, echo=True)
-    sql_engine = create_engine(DATABASE_URL, echo=False)
+    #sql_engine = create_engine(database_url, echo=True)
+    sql_engine = create_engine(database_url, echo=False)
 
     return sql_engine
 
 load_dotenv()  # take environment variables
-
 
 # Create a base class for our classes definitions.
 Base = declarative_base()
