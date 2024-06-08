@@ -6,7 +6,7 @@ import os
 from dotenv import load_dotenv
 
 import db
-from sql_models import User, encrypt_string, decrypt_string, load_key
+from sql_models import User, encrypt_string, load_key
 
 # CREATE
 def create_user(user_name, user_auth):
