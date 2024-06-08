@@ -1,5 +1,6 @@
 # https://www.pybootcamp.com/blog/how-to-write-dockerfile-python-apps/
-FROM python:3.12-slim-bullseye
+#FROM python:3.12-slim-bullseye
+FROM python:latest
 
 WORKDIR /srv/app
 
