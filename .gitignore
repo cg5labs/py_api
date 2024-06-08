@@ -13,6 +13,9 @@ __pycache__/
 *.log
 src/log
 
+# test code area
+src/scratch
+
 # Distribution / packaging
 .Python
 build/
