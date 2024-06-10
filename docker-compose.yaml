@@ -8,11 +8,16 @@ services:
       - .env
     networks:
       - postgres-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
 
   init-1:
     image: cg5labs/py_api:latest
-    user: "999"
-    entrypoint: "python3 generate_key.py"
+    user: "tdevops"
+    entrypoint: "/srv/app/generate_key"
     environment:
       SECRET_KEY: "/srv/app/app-data/secret.key"
     volumes:
@@ -22,29 +27,35 @@ services:
 
   init-2:
     image: cg5labs/py_api:latest
-    user: "999"
-    entrypoint: "python3 crud.py"
+    user: "tdevops"
+    entrypoint: "/srv/app/db_init"
     environment:
       SECRET_KEY: "/srv/app/app-data/secret.key"
       PROFILE: "DEFAULT"
-      DB_HOST: postgres
+      DB_HOST: "postgres"
     env_file:
       - src/.env
     volumes:
       - app-data:/srv/app/app-data:rw
     depends_on:
-      - init-1
+      postgres:
+        condition: service_healthy
+      init-1:
+        condition: service_completed_successfully
     networks:
       - postgres-network
 
   api:
     image: cg5labs/py_api:latest
-    user: "999"
-    entrypoint: "python3 app.py -p DEFAULT"
+    user: "tdevops"
+    # entrypoint: "/bin/sleep 3600"
+    entrypoint:
+      - "/srv/app/app_init"
+      - "-p DEFAULT"
     environment:
       SECRET_KEY: /srv/app/app-data/secret.key
       PROFILE: "DEFAULT"
-      DB_HOST: postgres
+      DB_HOST: "postgres"
     env_file:
       - src/.env
     ports:
@@ -53,7 +64,6 @@ services:
       - init-2
     volumes:
       - app-data:/srv/app/app-data
-      #- ./:/tmp
     networks:
       - postgres-network
 

@@ -16,15 +16,18 @@ import api
 
 # Falcon app and routes
 prometheus = PrometheusMiddleware()
+jwt_auth_middleware = api.JWTAuthMiddleware()
 login_resource = api.LoginResource()
+register_resource = api.RegisterResource()
+protected_resource = api.ProtectedResource()
+middleware_list = [jwt_auth_middleware,prometheus]
 
-app = falcon.App(middleware=[api.JWTAuthMiddleware(),prometheus])
+app = falcon.App(middleware=middleware_list)
 app.add_route('/quote', api.QuoteResource())
 app.add_route('/login', login_resource)
-app.add_route('/register', api.RegisterResource())
-app.add_route('/protected', api.ProtectedResource())
+app.add_route('/register', register_resource)
+app.add_route('/protected', protected_resource)
 app.add_route('/metrics', prometheus)
-
 
 def configure_logging(log_path,log_level):
     # Create a custom logger
@@ -55,12 +58,9 @@ def main():
     parser.add_argument("-d", "--debug", help="Enable debug logs", action="store_true")
     parser.add_argument("--log", help="logfile path, e.g. log/apps.log", default="log/app.log")
     parser.add_argument("-p", "--profile", help="environment profile to use, e.g. local, default")
+    parser.add_argument("--apm", help="enable Elastic APM", action="store_true")
 
     args = parser.parse_args()
-
-    # override switch to force $PROFILE
-    if args.profile:
-        os.environ["PROFILE"] = args.profile
 
 
     if not os.path.exists(os.path.dirname(args.log)):
@@ -70,6 +70,19 @@ def main():
     log = logging.getLogger(__name__)
     log_level = "INFO" if not args.debug else "DEBUG"
     configure_logging(args.log, log_level)
+
+    # override switch to force $PROFILE
+    if args.profile:
+        log.info("--profile override set: %s." % args.profile)
+        os.environ["PROFILE"] = args.profile
+
+    #TODO: externalize APM configs
+    if args.apm:
+        import apm_config
+        apm_client = apm_config.init_apm(app_name="my_falcon_app",
+            apm_server_url="https://localhost:8200",
+            environment="development")
+        log.info("Elastic APM enabled.")
 
     load_dotenv()  # take environment variables
 

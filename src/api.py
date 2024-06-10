@@ -29,7 +29,9 @@ class JWTAuthMiddleware:
         req.start_time = time.time()
 
         # whitelist public pages
-        if req.path in ['/login', '/metrics', '/quote' ]:
+        whitelist = ['/login', '/metrics', '/quote' ]
+
+        if req.path in whitelist:
             return
 
         token = req.get_header('Authorization')
