@@ -12,22 +12,28 @@ from falcon_prometheus import PrometheusMiddleware
 from dotenv import load_dotenv
 
 import api
+import webserver
 
+def create_app(middleware_list=None):
 
-# Falcon app and routes
-prometheus = PrometheusMiddleware()
-jwt_auth_middleware = api.JWTAuthMiddleware()
-login_resource = api.LoginResource()
-register_resource = api.RegisterResource()
-protected_resource = api.ProtectedResource()
-middleware_list = [jwt_auth_middleware,prometheus]
+    if not middleware_list:
+    # Falcon app and routes
+        prometheus = PrometheusMiddleware()
+        jwt_auth_middleware = api.JWTAuthMiddleware()
+        middleware_list = [jwt_auth_middleware, prometheus]
 
-app = falcon.App(middleware=middleware_list)
-app.add_route('/quote', api.QuoteResource())
-app.add_route('/login', login_resource)
-app.add_route('/register', register_resource)
-app.add_route('/protected', protected_resource)
-app.add_route('/metrics', prometheus)
+    login_resource = api.LoginResource()
+    register_resource = api.RegisterResource()
+    protected_resource = api.ProtectedResource()
+
+    app = falcon.App(middleware=middleware_list)
+
+    app.add_route('/quote', api.QuoteResource())
+    app.add_route('/login', login_resource)
+    app.add_route('/register', register_resource)
+    app.add_route('/protected', protected_resource)
+
+    return app
 
 def configure_logging(log_path,log_level):
     # Create a custom logger
@@ -62,7 +68,6 @@ def main():
 
     args = parser.parse_args()
 
-
     if not os.path.exists(os.path.dirname(args.log)):
         os.mkdir(os.path.dirname(args.log))
 
@@ -76,25 +81,36 @@ def main():
         log.info("--profile override set: %s." % args.profile)
         os.environ["PROFILE"] = args.profile
 
+    prometheus = PrometheusMiddleware()
+    jwt_auth_middleware = api.JWTAuthMiddleware()
+
+    # default Falcon middleware 
+    middleware_list = [jwt_auth_middleware,prometheus]
+
     #TODO: externalize APM configs
     if args.apm:
         import apm_config
         apm_client = apm_config.init_apm(app_name="my_falcon_app",
             apm_server_url="https://localhost:8200",
             environment="development")
+
+        # Falcon middleware w/ Elastic APM
+        middleware_list = [jwt_auth_middleware,prometheus]
+
         log.info("Elastic APM enabled.")
 
     load_dotenv()  # take environment variables
-
     system_profile = os.getenv("PROFILE")
     log.info("Loaded system profile: %s" % system_profile )
 
+    app = create_app(middleware_list)
+
+    # loaded after Falcon app instantiation in create_app() for Prometheus
+    # middleware to capture URI stats properly
+    app.add_route('/metrics', prometheus)
+
     # TODO: externalize server IP, tcp-port
-    from wsgiref.simple_server import make_server
-    with make_server('', 8000, app) as httpd:
-        log.info("log: %s" % log.name)
-        log.info('Serving on port 8000...')
-        httpd.serve_forever()
+    webserver.start(port=8000, app=app)
 
 if __name__ == '__main__':
     main()
