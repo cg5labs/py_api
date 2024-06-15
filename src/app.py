@@ -84,7 +84,7 @@ def main():
     prometheus = PrometheusMiddleware()
     jwt_auth_middleware = api.JWTAuthMiddleware()
 
-    # default Falcon middleware 
+    # default Falcon middleware
     middleware_list = [jwt_auth_middleware,prometheus]
 
     #TODO: externalize APM configs

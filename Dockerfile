@@ -29,6 +29,7 @@ COPY src/sql_models.py ./
 COPY src/generate_key.py ./
 COPY src/crud.py ./
 COPY src/apm_config.py ./
+COPY src/webserver.py ./
 
 RUN mkdir app-data && \ 
     chown tdevops /srv/app/app-data

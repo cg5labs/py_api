@@ -11,5 +11,5 @@ def start(port, app):
     """ instantiate wsgi server """
     with make_server('', port, app) as httpd:
         log.info("log: %s" % log.name)
-        log.info('Serving on port 8000...')
+        log.info('Serving on port %s...' % port)
         httpd.serve_forever()
