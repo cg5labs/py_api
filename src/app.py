@@ -68,11 +68,13 @@ def configure_argparse():
     parser.add_argument("--log", help="logfile path, e.g. log/apps.log", default="log/app.log")
     parser.add_argument("--profile", help="environment profile to use, e.g. local, default")
     parser.add_argument("--apm", help="enable Elastic APM", action="store_true")
-    parser.add_argument("--apm_url", help="URL of the Elastic APM server", default="http://localhost:8200")
+    parser.add_argument("--apm_url", help="URL of the Elastic APM server",
+        default="http://localhost:8200")
 
     return parser
 
 def main():
+    """ main """
 
     parser = configure_argparse()
     args = parser.parse_args()
@@ -95,7 +97,6 @@ def main():
     jwt_auth_middleware = api.JWTAuthMiddleware()
     middleware_list = [jwt_auth_middleware,prometheus]
 
-    #TODO: externalize APM configs
     if args.apm:
         from falcon_elastic_apm import ElasticApmMiddleware
         #import apm_config
