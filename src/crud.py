@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """ SQL init and tests   """
 
+import argparse
 import os
 
 from dotenv import load_dotenv
@@ -67,6 +68,24 @@ def delete_user(user_id):
         return True
     return False
 
+def crud_tests():
+    """ SQL unit tests """
+
+    # Create, Update user
+    user2 = create_user("user2", "test123")
+    update_user(user2.id, user_auth='test999')
+    print(f"Updated User 2: {get_user(user2.id)}")
+
+    # Delete user
+    delete_user(user2.id)
+    print(f"All Users after deletion: {get_all_users()}")
+
+def configure_argparse():
+    """ CLI parameters config """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--test", help="Run SQL unit tests", action="store_true")
+
+    return parser
 
 def main():
     """ main """
@@ -81,23 +100,15 @@ def main():
     admin_auth = os.getenv('API_ADMIN_AUTH')
     admin = create_user(admin_user, admin_auth)
 
+    parser = configure_argparse()
+    args = parser.parse_args()
+
     # Read users
     print(f"admin: {get_user(admin.id)}")
     print(f"All Users: {get_all_users()}")
 
-def crud_tests():
-    """ SQL unit tests """
-
-    # Create, Update user
-    user2 = create_user("user2", "test123")
-    update_user(user2.id, user_auth='test999')
-    print(f"Updated User 2: {get_user(user2.id)}")
-
-    # Delete user
-    delete_user(user2.id)
-    print(f"All Users after deletion: {get_all_users()}")
+    if args.test:
+        crud_tests()
 
 if __name__ == "__main__":
-
     main()
-    crud_tests()

@@ -42,7 +42,6 @@ Base = declarative_base()
 
 engine = create_db_engine()
 
-
 # Create a configured "Session" class
 Session = sessionmaker(bind=engine)
 

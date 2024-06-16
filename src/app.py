@@ -36,6 +36,8 @@ def create_app(middleware_list=None):
     return app
 
 def configure_logging(log_path,log_level):
+    """ Log handler and appenders config """
+
     # Create a custom logger
     logger = logging.getLogger()
     logger.setLevel(log_level)
@@ -57,15 +59,22 @@ def configure_logging(log_path,log_level):
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
 
-def main():
-
+def configure_argparse():
+    """ CLI parameters config """
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-d", "--debug", help="Enable debug logs", action="store_true")
+    parser.add_argument("-p", "--port", help="WSGI server tcp-port to use", default="8000")
     parser.add_argument("--log", help="logfile path, e.g. log/apps.log", default="log/app.log")
-    parser.add_argument("-p", "--profile", help="environment profile to use, e.g. local, default")
+    parser.add_argument("--profile", help="environment profile to use, e.g. local, default")
     parser.add_argument("--apm", help="enable Elastic APM", action="store_true")
+    parser.add_argument("--apm_url", help="URL of the Elastic APM server", default="http://localhost:8200")
 
+    return parser
+
+def main():
+
+    parser = configure_argparse()
     args = parser.parse_args()
 
     if not os.path.exists(os.path.dirname(args.log)):
@@ -81,36 +90,39 @@ def main():
         log.info("--profile override set: %s." % args.profile)
         os.environ["PROFILE"] = args.profile
 
+    # default Falcon middleware
     prometheus = PrometheusMiddleware()
     jwt_auth_middleware = api.JWTAuthMiddleware()
-
-    # default Falcon middleware
     middleware_list = [jwt_auth_middleware,prometheus]
 
     #TODO: externalize APM configs
     if args.apm:
-        import apm_config
-        apm_client = apm_config.init_apm(app_name="my_falcon_app",
-            apm_server_url="https://localhost:8200",
-            environment="development")
+        from falcon_elastic_apm import ElasticApmMiddleware
+        #import apm_config
+        elastic_apm_middleware = ElasticApmMiddleware(
+            service_name='falcon_apm', 
+            server_url=args.apm_url
+        )
 
         # Falcon middleware w/ Elastic APM
-        middleware_list = [jwt_auth_middleware,prometheus]
+        middleware_list = [jwt_auth_middleware,prometheus,elastic_apm_middleware]
 
         log.info("Elastic APM enabled.")
+        log.info("Elastic APM server URL: %s" % args.apm_url)
 
     load_dotenv()  # take environment variables
     system_profile = os.getenv("PROFILE")
     log.info("Loaded system profile: %s" % system_profile )
 
+    log.info("Instantiating Falcon application.")
     app = create_app(middleware_list)
 
     # loaded after Falcon app instantiation in create_app() for Prometheus
     # middleware to capture URI stats properly
     app.add_route('/metrics', prometheus)
 
-    # TODO: externalize server IP, tcp-port
-    webserver.start(port=8000, app=app)
+    log.info("Launching WSGI server for Falcon application.")
+    webserver.start(port=int(args.port), app=app)
 
 if __name__ == '__main__':
     main()
