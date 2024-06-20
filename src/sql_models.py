@@ -19,7 +19,7 @@ def load_key():
     """ Load the key from the file """
 
     secret_key = os.getenv('SECRET_KEY')
-    log.info("loaded key: %s" % secret_key)
+    log.debug("loaded key: %s" % secret_key)
     return open(secret_key, "rb").read()
 
 # Encrypt and decrypt functions
