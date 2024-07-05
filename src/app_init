@@ -1,9 +1,9 @@
 #!/bin/sh
 APP_PATH="/srv/app"
-PARAMS="${*}"
+#PARAMS="$@"
 
 # shellcheck source=/dev/null
 . "${APP_PATH}/venv/bin/activate"
 
 cd  "${APP_PATH}" || exit 1
-python3 app.py "${PARAMS}"
+python3 app.py "$@"

@@ -1,0 +1,138 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{include "py_api.fullname" .}}
+  labels:
+    app.kubernetes.io/name: {{include "py_api.name" .}}
+    helm.sh/chart: {{include "py_api.chart" .}}
+    app.kubernetes.io/instance: {{.Release.Name}}
+    app.kubernetes.io/managed-by: {{.Release.Service}}
+spec:
+  replicas: {{.Values.replicaCount}}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{include "py_api.name" .}}
+      app.kubernetes.io/instance: {{.Release.Name}}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{include "py_api.name" .}}
+        app.kubernetes.io/instance: {{.Release.Name}}
+    spec:
+      volumes:
+        - name: shared-data
+          emptyDir: {}
+      initContainers:
+        - name: keygen
+          image: cg5labs/py_api:latest
+          env:
+            - name: SECRET_KEY
+              value: "/srv/app/app-data/secret.key"
+          command: ["/srv/app/generate_key"]
+          volumeMounts:
+            - name: shared-data
+              mountPath: /srv/app/app-data
+        - name: db-init
+          image: cg5labs/py_api:latest
+          command: ["/srv/app/db_init"]
+          volumeMounts:
+            - name: shared-data
+              mountPath: /srv/app/app-data
+          env:
+            - name: SECRET_KEY
+              value: "/srv/app/app-data/secret.key"
+            - name: PROFILE
+              value: "DEFAULT"
+            - name: DEFAULT_DB_ENGINE
+              value: "postgresql"
+            - name: DB_PORT
+              value: "{{.Values.db_port}}"
+            - name: DB_HOST
+              value: "{{.Values.db_host}}"
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_DB
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_USER
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_PASSWORD
+            - name: API_ADMIN
+              valueFrom:
+                secretKeyRef:
+                  name: api-credentials
+                  key: API_ADMIN
+            - name: API_ADMIN_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: api-credentials
+                  key: API_ADMIN_AUTH
+      containers:
+        - name: {{.Chart.Name}}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{.Values.image.pullPolicy}}
+          command: ["/srv/app/app_init"]
+          args:
+            - "--profile=DEFAULT"
+            #- --debug
+            #- --apm
+            #- "--apm_url=https://eck-apm-http.elastic.svc.cluster.local:8200"
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          volumeMounts:
+            - name: shared-data
+              mountPath: /srv/app/app-data
+          env:
+            - name: ELASTIC_APM_SECRET_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: eck-apm-token
+                  key: secret-token
+                  optional: true
+            - name: ELASTIC_APM_VERIFY_SERVER_CERT
+              value: "False"
+            - name: PROFILE
+              value: "DEFAULT"
+            - name: DEFAULT_DB_ENGINE
+              value: "postgresql"
+            - name: SECRET_KEY
+              value: "/srv/app/app-data/secret.key"
+            - name: DB_PORT
+              value: "{{.Values.db_port}}"
+            - name: DB_HOST
+              value: "{{.Values.db_host}}"
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_DB
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_USER
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: POSTGRES_PASSWORD
+            - name: API_ADMIN
+              valueFrom:
+                secretKeyRef:
+                  name: api-credentials
+                  key: API_ADMIN
+            - name: API_ADMIN_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: api-credentials
+                  key: API_ADMIN_AUTH

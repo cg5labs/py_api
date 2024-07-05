@@ -1,0 +1,12 @@
+---
+replicaCount: 1
+image:
+  repository: "cg5labs/py_api"
+  tag: "latest"
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 8000
+db_host: "postgres-service"
+#db_host_fqdn: "postgres-service.default.svc.cluster.local"
+db_port: 5432
