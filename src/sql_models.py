@@ -6,7 +6,7 @@ import logging
 
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
-from sqlalchemy import Column, Integer, String, Sequence, Boolean
+from sqlalchemy import Column, Integer, String, Sequence
 
 from db import Base
 
