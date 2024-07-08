@@ -33,7 +33,7 @@ jobs:
       - name: Lint with Ruff
         run: |
           pip install ruff
-          ruff --output-format=github .
+          ruff --output-format=github check .
         continue-on-error: true
 
       - name: Login to Docker Hub
