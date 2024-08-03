@@ -82,9 +82,9 @@ spec:
           command: ["/srv/app/app_init"]
           args:
             - "--profile=DEFAULT"
-            #- --debug
-            #- --apm
-            #- "--apm_url=https://eck-apm-http.elastic.svc.cluster.local:8200"
+            # - --debug
+            # - --apm
+            # - "--apm_url=https://eck-apm-http.elastic.svc.cluster.local:8200"
           ports:
             - name: http
               containerPort: 8000
